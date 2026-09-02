@@ -1,0 +1,34 @@
+name: InvariantBreaker CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Run rounding scanner (expect findings on vulnerable pool)
+        run: |
+          python tool/rounding_scanner.py poc/src/VulnerableStablePool.sol
+          if [ $? -ne 1 ]; then echo "Scanner should flag vulnerable pool"; exit 1; fi
+
+      - name: Install forge-std
+        working-directory: poc
+        run: forge install foundry-rs/forge-std --no-commit
+
+      - name: Run exploit PoC
+        working-directory: poc
+        run: forge test -vvv
+
+      - name: Run invariant tests
+        working-directory: poc
+        run: forge test --match-contract Invariant -vvv
