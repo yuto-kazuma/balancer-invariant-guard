@@ -1,4 +1,4 @@
-# InvariantBreaker — Tool Architecture
+# InvariantBreaker Tool Architecture
 
 ## Design Philosophy
 
@@ -14,63 +14,53 @@ The architecture deliberately separates:
 | **Sequence Searcher** | Find adversarial swap paths | Bounded symbolic + fuzz |
 | **PoC Synthesizer** | Emit Foundry/Rust tests | Deterministic templates + AI fill |
 
-> AI orchestrates exploration. The deterministic core proves violations.
+AI orchestrates exploration. The deterministic core proves violations.
 
-This mirrors Olympix's model: formal methods + symbolic execution + BugPoCer-style PoC generation.
+This mirrors Olympix's model: formal methods, symbolic execution, and BugPoCer-style PoC generation.
 
 ---
 
 ## System Architecture
 
-```
-                    ┌──────────────────────────────────────┐
-                    │           Developer Workflow          │
-                    │  CLI / VS Code / GitHub Action / PR   │
-                    └───────────────────┬──────────────────┘
-                                        │
-                    ┌───────────────────▼──────────────────┐
-                    │         1. Context Builder (AI)       │
-                    │  • Parse project (Solidity AST/IR)    │
-                    │  • Infer protocol type (AMM, vault…)    │
-                    │  • Extract documented invariants      │
-                    │  • Build dependency graph             │
-                    │  • Rank high-impact functions         │
-                    └───────────────────┬──────────────────┘
-                                        │
-          ┌─────────────────────────────┼─────────────────────────────┐
-          │                             │                             │
-          ▼                             ▼                             ▼
-┌─────────────────┐         ┌─────────────────────┐       ┌──────────────────┐
-│ 2a. Rounding    │         │ 2b. Invariant       │       │ 2c. Sequence     │
-│     Graph       │         │     Spec Engine     │       │     Searcher     │
-│                 │         │                     │       │                  │
-│ • Map mulDown/  │         │ • D monotonicity    │       │ • Batch swap     │
-│   divUp/divDown │         │ • BPT rate bounds   │       │   permutations   │
-│ • Pair upscale/ │         │ • Protocol-favoring │       │ • Boundary values│
-│   downscale ops │         │   rounding          │       │ • Guided fuzz    │
-│ • Flag asymmetry│         │ • Per-tx rate caps  │       │ • Symbolic exec  │
-└────────┬────────┘         └──────────┬──────────┘       └────────┬─────────┘
-         │                             │                             │
-         └─────────────────────────────┼─────────────────────────────┘
-                                       ▼
-                    ┌──────────────────────────────────────┐
-                    │      3. Violation Aggregator          │
-                    │  Merge findings, dedupe, rank severity│
-                    └───────────────────┬──────────────────┘
-                                        ▼
-                    ┌──────────────────────────────────────┐
-                    │      4. PoC Synthesizer               │
-                    │  • Foundry .t.sol / Hardhat tests     │
-                    │  • Fork tests with realistic state    │
-                    │  • Invariant regression tests         │
-                    └───────────────────┬──────────────────┘
-                                        ▼
-                    ┌──────────────────────────────────────┐
-                    │      5. CI Gate + PR Comments         │
-                    │  Block merge if PoC passes            │
-                    │  Attach exploit test to review        │
-                    └──────────────────────────────────────┘
-```
+**1. Developer workflow** (CLI, VS Code, GitHub Action, PR)
+
+**2. Context Builder (AI)**
+- Parse project (Solidity AST/IR)
+- Infer protocol type (AMM, vault, etc.)
+- Extract documented invariants
+- Build dependency graph
+- Rank high-impact functions
+
+**3. Analysis layer (parallel)**
+
+*2a. Rounding Graph*
+- Map mulDown, divUp, divDown usage
+- Pair upscale/downscale operations
+- Flag asymmetry
+
+*2b. Invariant Spec Engine*
+- D monotonicity
+- BPT rate bounds
+- Protocol-favoring rounding
+- Per-tx rate caps
+
+*2c. Sequence Searcher*
+- Batch swap permutations
+- Boundary value targets
+- Guided fuzz
+- Symbolic execution (bounded)
+
+**4. Violation Aggregator**
+- Merge findings, dedupe, rank severity
+
+**5. PoC Synthesizer**
+- Foundry `.t.sol` / Hardhat tests
+- Fork tests with realistic state
+- Invariant regression tests
+
+**6. CI Gate + PR Comments**
+- Block merge if PoC passes
+- Attach exploit test to review
 
 ---
 
@@ -102,7 +92,7 @@ high_risk_functions:
   - batchSwap
 ```
 
-The AI layer reads NatSpec, README, and test files to infer what the protocol *intends* to guarantee. Human approval step optional for CI (auto-approve known patterns).
+The AI layer reads NatSpec, README, and test files to infer what the protocol intends to guarantee. Human approval step optional for CI (auto-approve known patterns).
 
 ---
 
@@ -132,7 +122,7 @@ Pre-defined invariant templates by protocol type:
 ### Stable Pool Invariants
 
 ```solidity
-// Generated by InvariantBreaker — do not edit manually
+// Generated by InvariantBreaker - do not edit manually
 invariant_bpt_rate_stable() public {
     uint256 rateBefore = pool.getRate();
     // ... execute bounded swap sequence ...
@@ -161,12 +151,12 @@ Reference: [Phylax Balancer assertion](https://docs.phylax.systems/assertions-bo
 
 **Approach:**
 
-1. **Seed values:** Token balances at 1, 2, …, 10 wei (rounding boundary targets)
-2. **Guided fuzz:** Mutate batch swap arrays; fitness = |ΔD| + |ΔBPT_rate|
+1. **Seed values:** Token balances at 1, 2, ..., 10 wei (rounding boundary targets)
+2. **Guided fuzz:** Mutate batch swap arrays; fitness = delta D + delta BPT rate
 3. **Symbolic bounds:** Constrain swap amounts to ranges where `upscale(x) < x * rate`
 4. **Early stop:** When fitness exceeds threshold, hand off to PoC synthesizer
 
-Bounded exploration avoids path explosion — same strategy Olympix describes for signal-guided symbolic execution.
+Bounded exploration avoids path explosion. Same strategy Olympix describes for signal-guided symbolic execution.
 
 ---
 
@@ -177,8 +167,8 @@ When a violation is found, generate a self-contained Foundry test:
 ```solidity
 function test_INVARIANT_BREAK_BPT_rate_manipulation() public {
     // Setup: fork or mock pool at realistic liquidity
-    // Sequence: [swap steps from searcher]
-    // Assert: rate change exceeds threshold (PROVES bug)
+    // Sequence: swap steps from searcher
+    // Assert: rate change exceeds threshold (proves bug)
     // Profit: attacker balance increased
 }
 ```
@@ -218,12 +208,12 @@ PR comments include:
 
 | Capability | BugPoCer | InvariantBreaker (this design) |
 |------------|----------|--------------------------------|
-| AI context building | ✓ | ✓ (documented) |
-| Symbolic execution | ✓ (proprietary IR) | Sequence search (bounded) |
-| PoC generation | ✓ | ✓ (implemented) |
-| Rounding-specific analysis | General detectors | **Specialized rounding graph** |
-| Invariant templates | User-provided | **Auto-inferred by protocol type** |
-| Pre-deploy CI | ✓ | ✓ |
+| AI context building | Yes | Yes (documented) |
+| Symbolic execution | Yes (proprietary IR) | Sequence search (bounded) |
+| PoC generation | Yes | Yes (implemented) |
+| Rounding-specific analysis | General detectors | Specialized rounding graph |
+| Invariant templates | User-provided | Auto-inferred by protocol type |
+| Pre-deploy CI | Yes | Yes |
 
 InvariantBreaker is complementary: it deepens one vulnerability class (arithmetic/invariant) that general scanners under-weight.
 
@@ -245,5 +235,5 @@ InvariantBreaker is complementary: it deepens one vulnerability class (arithmeti
 1. Full solc AST integration for sound rounding graphs
 2. Integration with Olympix IR / BugPoCer as specialized invariant module
 3. Mainnet fork PoC against archived Balancer pool state (Nov 2, 2025)
-4. Extend to Sonne Finance, Hundred Finance (same rounding class, 2023–2024)
+4. Extend to Sonne Finance, Hundred Finance (same rounding class, 2023-2024)
 5. Rust/Anchor support for Solana AMM rounding issues

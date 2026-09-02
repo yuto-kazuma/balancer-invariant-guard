@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-InvariantBreaker — Rounding Direction Analyzer
+InvariantBreaker - Rounding Direction Analyzer
 
 Scans Solidity source for rounding asymmetries that caused the Balancer V2
 Nov 2025 exploit (_upscale mulDown on GIVEN_OUT path).
@@ -80,7 +80,7 @@ def scan_file(path: Path) -> ScanResult:
                     detail=(
                         "_upscale uses mulDown without mulUp alternative. "
                         "On GIVEN_OUT paths this underestimates amountOut before "
-                        "amountIn calculation — root cause of Balancer V2 Nov 2025 exploit."
+                        "amountIn calculation. Root cause of Balancer V2 Nov 2025 exploit."
                     ),
                     line=start_line,
                     snippet=lines[start_line - 1].strip() if start_line <= len(lines) else "",
@@ -163,7 +163,7 @@ def scan_file(path: Path) -> ScanResult:
 def print_report(results: list[ScanResult]) -> int:
     total_critical = 0
     print("=" * 72)
-    print("InvariantBreaker — Rounding Direction Analysis Report")
+    print("InvariantBreaker - Rounding Direction Analysis Report")
     print("=" * 72)
 
     for res in results:
@@ -185,10 +185,10 @@ def print_report(results: list[ScanResult]) -> int:
 
     print("\n" + "=" * 72)
     if total_critical:
-        print(f"RESULT: FAIL — {total_critical} high-severity finding(s). Run PoC tests.")
+        print(f"RESULT: FAIL - {total_critical} high-severity finding(s). Run PoC tests.")
         print("Suggested: cd poc && forge test --match-test test_rounding_exploit -vvv")
     else:
-        print("RESULT: PASS — no critical rounding issues detected.")
+        print("RESULT: PASS - no critical rounding issues detected.")
     print("=" * 72)
     return 1 if total_critical else 0
 

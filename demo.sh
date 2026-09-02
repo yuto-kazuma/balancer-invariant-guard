@@ -4,17 +4,17 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 echo ""
 echo "========================================"
-echo " InvariantBreaker — Full Demo"
+echo " InvariantBreaker - Full Demo"
 echo " Balancer V2 Take-Home Submission"
 echo "========================================"
 echo ""
 
-echo ">>> Step 1: Rounding direction analysis"
+echo "[Step 1] Rounding direction analysis"
 echo ""
 python3 "$ROOT/tool/rounding_scanner.py" "$ROOT/poc/src/VulnerableStablePool.sol" || true
 echo ""
 
-echo ">>> Step 2: Foundry PoC — exploit reproduction"
+echo "[Step 2] Foundry PoC - exploit reproduction"
 echo ""
 cd "$ROOT/poc"
 if ! command -v forge &>/dev/null; then
@@ -29,17 +29,17 @@ fi
 forge test --match-test test_rounding_exploit_drains_pool -vvv
 echo ""
 
-echo ">>> Step 3: BPT rate invariant (would block in CI)"
+echo "[Step 3] BPT rate invariant (would block in CI)"
 echo ""
 forge test --match-test test_bpt_rate_invariant_would_catch_exploit -vvv || true
 echo ""
 
-echo ">>> Step 4: Fixed rounding path (mitigation)"
+echo "[Step 4] Fixed rounding path (mitigation)"
 echo ""
 forge test --match-test test_fixed_rounding_prevents_exploit -vvv
 echo ""
 
 echo "========================================"
 echo " Demo complete."
-echo " See docs/ for full analysis + architecture."
+echo " See docs/ for full analysis and architecture."
 echo "========================================"

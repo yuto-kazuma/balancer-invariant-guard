@@ -1,24 +1,24 @@
-# InvariantBreaker — Olympix Take-Home Submission
+# InvariantBreaker - Olympix Take-Home Submission
 
 **Author:** [Yuto Kazuma](https://github.com/yuto-kazuma)  
-**Exploit analyzed:** Balancer V2 Composable Stable Pool — November 3, 2025 (~$128M)  
+**Exploit analyzed:** Balancer V2 Composable Stable Pool, November 3, 2025 (~$128M)  
 **Submission date:** September 2026
 
 ---
 
 ## Executive Summary
 
-On November 3, 2025, attackers drained **$128M+** from Balancer V2 Composable Stable Pools across nine chains. The root cause was not a missing access check or reentrancy bug — it was a **rounding-direction asymmetry** in the exact-out swap path that, when combined with rate providers and adversarial batch swaps, systematically deflated the pool invariant `D` and underpriced BPT.
+On November 3, 2025, attackers drained **$128M+** from Balancer V2 Composable Stable Pools across nine chains. The root cause was not a missing access check or reentrancy bug. It was a **rounding-direction asymmetry** in the exact-out swap path that, when combined with rate providers and adversarial batch swaps, systematically deflated the pool invariant `D` and underpriced BPT.
 
-This bug survived **10+ audits** because it only manifests under **multi-step adversarial execution** — exactly the class of vulnerability that pre-deployment tooling with **formal invariants + executable PoCs** must catch.
+This bug survived **10+ audits** because it only manifests under **multi-step adversarial execution**. That is exactly the class of vulnerability that pre-deployment tooling with **formal invariants and executable PoCs** must catch.
 
 **InvariantBreaker** is the tool I architect to prevent this class of exploit. It combines:
 
-1. **AI context layer** — infers economic invariants and threat model from Solidity
-2. **Deterministic analyzer** — checks rounding-direction consistency and searches for invariant violations
-3. **PoC synthesizer** — emits Foundry tests that *prove* the break, not just flag a pattern
+1. **AI context layer**: infers economic invariants and threat model from Solidity
+2. **Deterministic analyzer**: checks rounding-direction consistency and searches for invariant violations
+3. **PoC synthesizer**: emits Foundry tests that prove the break, not just flag a pattern
 
-> *AI orchestrates. The deterministic core proves.*
+AI orchestrates. The deterministic core proves.
 
 This mirrors Olympix's thesis: act on demonstrated exploits, not a backlog of maybes.
 
@@ -40,20 +40,15 @@ cd ../poc && forge test -vvv
 
 ## Repository Structure
 
-```
-├── README.md                          # This file
-├── docs/
-│   ├── 01-exploit-analysis.md         # Why Balancer, root cause, attack flow
-│   └── 02-tool-architecture.md        # InvariantBreaker design
-├── poc/
-│   ├── src/                           # Minimal vulnerable pool (Balancer bug repro)
-│   └── test/                          # Foundry exploit + invariant tests
-├── tool/
-│   ├── rounding_scanner.py            # AST-light rounding consistency checker
-│   └── templates/invariant.t.sol.template
-├── demo.sh / demo.ps1
-└── SUBMISSION.md                      # Email-ready summary for Mason
-```
+- `README.md` - This file
+- `docs/01-exploit-analysis.md` - Why Balancer, root cause, attack flow
+- `docs/02-tool-architecture.md` - InvariantBreaker design
+- `poc/src/` - Minimal vulnerable pool (Balancer bug repro)
+- `poc/test/` - Foundry exploit and invariant tests
+- `tool/rounding_scanner.py` - Rounding consistency checker
+- `tool/templates/invariant.t.sol.template` - Generated invariant test template
+- `demo.sh` / `demo.ps1` - One-command demo
+- `SUBMISSION.md` - Email-ready summary for Mason
 
 ---
 
@@ -61,11 +56,11 @@ cd ../poc && forge test -vvv
 
 | Criterion | Balancer |
 |-----------|----------|
-| Within 18 months | Nov 2025 ✓ |
-| Smart-contract logic | Pure math/rounding bug ✓ |
-| Missed by audits | 10+ audits since 2021 ✓ |
-| PoC feasible | Foundry reproducible ✓ |
-| Olympix alignment | Invariant breaking + proven PoC ✓ |
+| Within 18 months | Nov 2025 |
+| Smart-contract logic | Pure math/rounding bug |
+| Missed by audits | 10+ audits since 2021 |
+| PoC feasible | Foundry reproducible |
+| Olympix alignment | Invariant breaking + proven PoC |
 
 See [docs/01-exploit-analysis.md](docs/01-exploit-analysis.md) for the full analysis.
 
@@ -84,12 +79,10 @@ See [docs/01-exploit-analysis.md](docs/01-exploit-analysis.md) for the full anal
 
 ### Pre-deployment integration
 
-```
-PR opened → InvariantBreaker CI
-         → Scan changed .sol for rounding asymmetry
-         → Run invariant tests on fork
-         → If PoC passes (invariant broken): block merge + attach exploit test
-```
+1. PR opened, InvariantBreaker CI runs
+2. Scan changed `.sol` files for rounding asymmetry
+3. Run invariant tests on fork
+4. If PoC passes (invariant broken), block merge and attach exploit test
 
 ---
 
@@ -118,11 +111,11 @@ Expected output: flags `_upscale` using `mulDown` without protocol-favoring roun
 
 ---
 
-## Limitations & Future Work
+## Limitations and Future Work
 
 - Minimal pool simplifies StableMath; full mainnet fork PoC possible with archive node
 - Sequence search is bounded fuzzing; production would use symbolic execution (Olympix IR engine)
-- AI context layer is documented but not fully implemented — deterministic core is the PoC focus
+- AI context layer is documented but not fully implemented; deterministic core is the PoC focus
 
 ---
 
