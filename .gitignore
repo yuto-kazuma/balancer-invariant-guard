@@ -16,3 +16,6 @@ __pycache__/
 # IDE
 .idea/
 .vscode/
+
+# Local email draft (do not push)
+EMAIL.md
