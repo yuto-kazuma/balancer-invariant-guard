@@ -13,7 +13,12 @@ Write-Host ""
 python "$Root\tool\rounding_scanner.py" "$Root\poc\src\VulnerableStablePool.sol"
 Write-Host ""
 
-Write-Host '[Step 2] Foundry PoC - exploit reproduction'
+Write-Host '[Step 2] Bounded symbolic search'
+Write-Host ""
+python "$Root\tool\symbolic_search.py"
+Write-Host ""
+
+Write-Host '[Step 3] Foundry PoC - exploit reproduction'
 Write-Host ""
 Set-Location "$Root\poc"
 
@@ -35,17 +40,16 @@ if (-not (Test-Path "lib\forge-std")) {
 & $Forge test --match-test test_rounding_exploit_drains_pool -vvv
 Write-Host ""
 
-Write-Host '[Step 3] BPT rate invariant (would block in CI)'
+Write-Host '[Step 4] BPT rate invariant (would block in CI)'
 Write-Host ""
 & $Forge test --match-test test_bpt_rate_invariant_would_catch_exploit -vvv
 Write-Host ""
 
-Write-Host '[Step 4] Fixed rounding path (mitigation)'
+Write-Host '[Step 5] Fixed rounding path (mitigation)'
 Write-Host ""
 & $Forge test --match-test test_fixed_rounding_prevents_exploit -vvv
 Write-Host ""
 
 Write-Host "========================================"
 Write-Host " Demo complete."
-Write-Host " See docs\ for full analysis + architecture."
 Write-Host "========================================"

@@ -14,7 +14,12 @@ echo ""
 python3 "$ROOT/tool/rounding_scanner.py" "$ROOT/poc/src/VulnerableStablePool.sol" || true
 echo ""
 
-echo "[Step 2] Foundry PoC - exploit reproduction"
+echo "[Step 2] Bounded symbolic search"
+echo ""
+python3 "$ROOT/tool/symbolic_search.py" || true
+echo ""
+
+echo "[Step 3] Foundry PoC - exploit reproduction"
 echo ""
 cd "$ROOT/poc"
 if ! command -v forge &>/dev/null; then
@@ -29,17 +34,16 @@ fi
 forge test --match-test test_rounding_exploit_drains_pool -vvv
 echo ""
 
-echo "[Step 3] BPT rate invariant (would block in CI)"
+echo "[Step 4] BPT rate invariant (would block in CI)"
 echo ""
 forge test --match-test test_bpt_rate_invariant_would_catch_exploit -vvv || true
 echo ""
 
-echo "[Step 4] Fixed rounding path (mitigation)"
+echo "[Step 5] Fixed rounding path (mitigation)"
 echo ""
 forge test --match-test test_fixed_rounding_prevents_exploit -vvv
 echo ""
 
 echo "========================================"
 echo " Demo complete."
-echo " See docs/ for full analysis and architecture."
 echo "========================================"

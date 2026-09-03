@@ -7,7 +7,9 @@ Balancer V2 Nov 2025 rounding exploit repro + a small tool that would have caugh
 # or: ./demo.sh
 
 cd poc && forge test -vvv
+python tool/symbolic_search.py
 ```
 
 - `poc/` - pool + Foundry tests
-- `tool/rounding_scanner.py` - checks upscale/downscale rounding
+- `tool/rounding_scanner.py` - static rounding checks
+- `tool/symbolic_search.py` - bounded symbolic counterexample search
