@@ -18,8 +18,19 @@ jobs:
 
       - name: Run rounding scanner (expect findings on vulnerable pool)
         run: |
+          set +e
           python tool/rounding_scanner.py poc/src/VulnerableStablePool.sol
-          if [ $? -ne 1 ]; then echo "Scanner should flag vulnerable pool"; exit 1; fi
+          code=$?
+          set -e
+          if [ "$code" -eq 1 ]; then
+            echo "Scanner correctly flagged vulnerable pool"
+            exit 0
+          fi
+          if [ "$code" -eq 0 ]; then
+            echo "Scanner should flag vulnerable pool"
+            exit 1
+          fi
+          exit "$code"
 
       - name: Install forge-std
         working-directory: poc
